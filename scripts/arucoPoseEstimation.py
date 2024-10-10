@@ -27,44 +27,48 @@ ARUCO_DICT = {
     "DICT_APRILTAG_36h11": cv2.aruco.DICT_APRILTAG_36h11
 }
 
-def draw_axis(frame, rvec, tvec, matrix_coefficients, distortion_coefficients):
-    axis = np.float32([[0.1, 0, 0], [0, 0.1, 0], [0, 0, 0.1]]).reshape(-1, 3)
-    imgpts, _ = cv2.projectPoints(axis, rvec, tvec, matrix_coefficients, distortion_coefficients)
-    
-    # Ensure tvec is a 2D point
-    origin = (int(tvec[0]), int(tvec[1]))
-    imgpts = np.int32(imgpts).reshape(-1, 2)
-    
-    print("Origin:", origin)
-    print("Image Points:", imgpts)
-    
-    if imgpts.shape[0] != 3:
-        print("Error: imgpts does not contain 3 points. Current shape:", imgpts.shape)
-        return
-    
-    cv2.line(frame, origin, tuple(imgpts[0].ravel()), (255, 0, 0), 5)  # X axis
-    cv2.line(frame, origin, tuple(imgpts[1].ravel()), (0, 255, 0), 5)  # Y axis
-    cv2.line(frame, origin, tuple(imgpts[2].ravel()), (0, 0, 255), 5)  # Z axis
+def aruco_display(corners, ids, rejected, image):
+    if len(corners) > 0:
+        ids = ids.flatten()
+        for (markerCorner, markerID) in zip(corners, ids):
+            corners = markerCorner.reshape((4, 2))
+            (topLeft, topRight, bottomRight, bottomLeft) = corners
+            
+            topRight = (int(topRight[0]), int(topRight[1]))
+            bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+            bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+            topLeft = (int(topLeft[0]), int(topLeft[1]))
+
+            cv2.line(image, topLeft, topRight, (0, 255, 0), 2)
+            cv2.line(image, topRight, bottomRight, (0, 255, 0), 2)
+            cv2.line(image, bottomRight, bottomLeft, (0, 255, 0), 2)
+            cv2.line(image, bottomLeft, topLeft, (0, 255, 0), 2)
+            
+            cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+            cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+            cv2.circle(image, (cX, cY), 4, (0, 0, 255), -1)
+            
+            cv2.putText(image, str(markerID), (topLeft[0], topLeft[1] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                0.5, (0, 255, 0), 2)
+            print("[Inference] ArUco marker ID: {}".format(markerID))
+            
+    return image
 
 def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
+    cv2.aruco_dict = cv2.aruco.Dictionary_get(aruco_dict_type)
     parameters = cv2.aruco.DetectorParameters_create()
-    
-    corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-    
+
+    corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict, parameters=parameters)
+
     if len(corners) > 0:
         for i in range(0, len(ids)):
-            rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients, distortion_coefficients)
+            rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
+                                                                           distortion_coefficients)
             
             cv2.aruco.drawDetectedMarkers(frame, corners)
-            
-            # Ensure rvec and tvec are in the correct shape
-            rvec = rvec.reshape((3, 1))
-            tvec = tvec.reshape((3, 1))
-            
-            draw_axis(frame, rvec, tvec, matrix_coefficients, distortion_coefficients)
-    
+            cv2.drawFrameAxes(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)
+
     return frame
 
 aruco_type = "DICT_5X5_100"
@@ -86,9 +90,8 @@ while cap.isOpened():
         break
     
     output = pose_estimation(img, ARUCO_DICT[aruco_type], intrinsic_camera, distortion)
-    
     cv2.imshow('Estimated Pose', output)
-    
+
     key = cv2.waitKey(1) & 0xFF
     if key == ord('q'):
         break
