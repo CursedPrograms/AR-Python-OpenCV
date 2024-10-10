@@ -2,4 +2,5 @@ opencv-python==4.6.0
 opencv-contrib-python==4.6.0.66
 matplotlib>=3.9.2
 numpy>=1.26.2
+PyOpenGL==3.1.7
 pygame
