@@ -14,24 +14,24 @@ def main():
 
     scripts = {
         "1": {
-            "name": "Run 'arucoDetection.py'",
-            "description": "This is arucoDetection.py",
-            "file_name": "scripts/arucoDetection.py"
+            "name": "Run 'generate_aruco.py",
+            "description": "This is generate_aruco.py",
+            "file_name": "scripts/generate_aruco.py"
         },
         "2": {
-            "name": "Run 'arucoPoseEstimation.py",
-            "description": "This is arucoPoseEstimation.py",
-            "file_name": "scripts/arucoPoseEstimation.py"
+            "name": "Run 'aruco_detection.py'",
+            "description": "This is aruco_detection.py",
+            "file_name": "scripts/aruco_detection.py"
         },
         "3": {
-            "name": "Run 'generateAruco.py",
-            "description": "This is generateAruco.py",
-            "file_name": "scripts/generateAruco.py"
+            "name": "Run 'pose_estimation.py",
+            "description": "This is pose_estimation.py",
+            "file_name": "scripts/pose_estimation.py"
         },
         "4": {
-            "name": "Run 'arucoPoseObject.py",
-            "description": "This is arucoPoseObject.py",
-            "file_name": "scripts/arucoPoseObject.py"
+            "name": "Run 'pose_object.py",
+            "description": "This is pose_object.py",
+            "file_name": "scripts/pose_object.py"
         },
         "00": {
             "name": "Run 'install_dependencies.py'",

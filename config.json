@@ -4,6 +4,7 @@
       "Description": "Augmented Reality with Python & OpenCV",
       "ProjectStructure": {
         "MainScript": "main.py",
+        "ObjectPath": "objects/cube.obj",
         "DependenciesScript": "scripts/install-dependencies.py"
       },
       "Scripts": {
