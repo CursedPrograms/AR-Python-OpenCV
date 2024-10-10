@@ -25,6 +25,7 @@ To make the setup script executable, run the following command in your terminal:
 chmod +x setup.sh
 ```
 
+arucoPoseObject.py not tested!
 
 pip install Cython==3.0.11
 pip install PyOpenGL PyOpenGL_accelerate
