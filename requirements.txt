@@ -1,1 +1,1 @@
-
+opencv-python==1.26.2

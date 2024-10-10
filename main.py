@@ -16,12 +16,12 @@ def main():
         "1": {
             "name": "Run 'Script00'",
             "description": "This is Script01",
-            "file_name": "scripts/script00.py"
+            "file_name": "scripts/marker.py"
         },
         "2": {
             "name": "Run 'Script01",
             "description": "This is Script01",
-            "file_name": "scripts/script01.py"
+            "file_name": "scripts/marker.py"
         },
         "00": {
             "name": "Run 'install_dependencies.py'",
