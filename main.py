@@ -14,9 +14,9 @@ def main():
 
     scripts = {
         "1": {
-            "name": "Run 'marker.py'",
-            "description": "This is marker.py",
-            "file_name": "scripts/marker.py"
+            "name": "Run 'arucoDetection.py'",
+            "description": "This is arucoDetection.py",
+            "file_name": "scripts/arucoDetection.py"
         },
         "2": {
             "name": "Run 'arucoPoseEstimation.py",
