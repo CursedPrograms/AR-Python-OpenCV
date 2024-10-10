@@ -12,6 +12,8 @@
 
 # AR-Python-OpenCV
 
+### arucoPoseObject.py not tested!
+
 ## How to Run:
 ```bash
 pip install -r requirements.txt
@@ -25,16 +27,18 @@ To make the setup script executable, run the following command in your terminal:
 chmod +x setup.sh
 ```
 
-arucoPoseObject.py not tested!
-
+```bash
 pip install Cython==3.0.11
 pip install PyOpenGL PyOpenGL_accelerate
+```
 
+```bash
 opencv-python==4.6.0
 opencv-contrib-python==4.6.0.66
 matplotlib>=3.9.2
 numpy>=1.26.2
 pygame
+```
 
 
 <br>
