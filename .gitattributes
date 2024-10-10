@@ -7,3 +7,8 @@
 *.txt linguist-generated=false
 *.txt linguist-documentation=false
 *.txt linguist-detectable=true
+
+*.obj linguist-vendored=false
+*.obj linguist-generated=false
+*.obj linguist-documentation=false
+*.obj linguist-detectable=true
