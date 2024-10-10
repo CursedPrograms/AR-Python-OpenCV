@@ -28,6 +28,11 @@ def main():
             "description": "This is generateAruco.py",
             "file_name": "scripts/generateAruco.py"
         },
+        "4": {
+            "name": "Run 'arucoPoseObject.py",
+            "description": "This is arucoPoseObject.py",
+            "file_name": "scripts/arucoPoseObject.py"
+        },
         "00": {
             "name": "Run 'install_dependencies.py'",
             "description": "Install dependencies",
