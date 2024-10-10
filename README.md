@@ -62,16 +62,10 @@ numpy>=1.26.2
 PyOpenGL==3.1.7
 pygame
 ```
-
-
 <br>
-
 <div align="center">
 © Cursed Entertainment
 </div>
-
-
-
 <br>
 <div align="center">
 <a href="https://cursed-entertainment.itch.io/" target="_blank">
