@@ -1,7 +1,7 @@
 {
     "Config": {
-      "AppName": "TemplateProject",
-      "Description": "",
+      "AppName": "AR-Python-OpenCV",
+      "Description": "Augmented Reality with Python & OpenCV",
       "ProjectStructure": {
         "MainScript": "main.py",
         "DependenciesScript": "scripts/install-dependencies.py"
