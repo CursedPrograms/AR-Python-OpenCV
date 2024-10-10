@@ -19,9 +19,9 @@ def main():
             "file_name": "scripts/marker.py"
         },
         "2": {
-            "name": "Run 'pose_estimation.py",
-            "description": "This is pose_estimation.py",
-            "file_name": "scripts/pose_estimation.py"
+            "name": "Run 'arucoPoseEstimation.py",
+            "description": "This is arucoPoseEstimation.py",
+            "file_name": "scripts/arucoPoseEstimation.py"
         },
         "00": {
             "name": "Run 'install_dependencies.py'",
