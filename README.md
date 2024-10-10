@@ -25,7 +25,10 @@ To make the setup script executable, run the following command in your terminal:
 chmod +x setup.sh
 ```
 
-pip install opencv-contrib-python==4.6.0.66
+opencv-python==4.6.0
+opencv-contrib-python==4.6.0.66
+matplotlib>=3.9.2
+numpy>=1.26.2
 
 
 <br>
