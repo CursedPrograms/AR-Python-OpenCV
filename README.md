@@ -25,10 +25,15 @@ To make the setup script executable, run the following command in your terminal:
 chmod +x setup.sh
 ```
 
+
+pip install Cython==3.0.11
+pip install PyOpenGL PyOpenGL_accelerate
+
 opencv-python==4.6.0
 opencv-contrib-python==4.6.0.66
 matplotlib>=3.9.2
 numpy>=1.26.2
+pygame
 
 
 <br>
