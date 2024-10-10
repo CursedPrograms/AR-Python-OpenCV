@@ -21,14 +21,23 @@
   <br>
 
 # AR-Python-OpenCV
-## Augmented Reality with Python & OpenCV
+## Augmented Reality with Python. Aruco Markers & OpenCV
 
 ### arucoPoseObject.py not tested!
 
 ## How to Run:
+
+```bash
+pip install Cython==3.0.11
+pip install --upgrade pip setuptools wheel
+pip install path_to_downloaded_wheel.whl
+pip install PyOpenGL PyOpenGL_accelerate
+```
+
 ```bash
 pip install -r requirements.txt
 ```
+
 ```bash
 python main.py
 ```
@@ -40,6 +49,8 @@ chmod +x setup.sh
 
 ```bash
 pip install Cython==3.0.11
+pip install --upgrade pip setuptools wheel
+pip install path_to_downloaded_wheel.whl
 pip install PyOpenGL PyOpenGL_accelerate
 ```
 
@@ -48,6 +59,7 @@ opencv-python==4.6.0
 opencv-contrib-python==4.6.0.66
 matplotlib>=3.9.2
 numpy>=1.26.2
+PyOpenGL==3.1.7
 pygame
 ```
 
