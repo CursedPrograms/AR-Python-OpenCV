@@ -27,6 +27,8 @@
 
 ## How to Run:
 
+pip install objloader
+
 ```bash
 pip install Cython==3.0.11
 pip install --upgrade pip setuptools wheel

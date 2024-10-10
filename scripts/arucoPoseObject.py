@@ -7,7 +7,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import pygame
 from pygame.locals import *
-from objloader import OBJ
+from objloader import Obj
 
 ARUCO_DICT = {
     "DICT_4X4_50": cv2.aruco.DICT_4X4_50,
@@ -44,38 +44,12 @@ def init_gl(width, height):
     gluPerspective(45.0, float(width)/float(height), 0.1, 100.0)
     glMatrixMode(GL_MODELVIEW)
 
-def draw_cube(size):
-    glBegin(GL_QUADS)
-    glVertex3f( size,  size, -size)
-    glVertex3f(-size,  size, -size)
-    glVertex3f(-size,  size,  size)
-    glVertex3f( size,  size,  size)
-    
-    glVertex3f( size, -size,  size)
-    glVertex3f(-size, -size,  size)
-    glVertex3f(-size, -size, -size)
-    glVertex3f( size, -size, -size)
-    
-    glVertex3f( size,  size,  size)
-    glVertex3f(-size,  size,  size)
-    glVertex3f(-size, -size,  size)
-    glVertex3f( size, -size,  size)
-    
-    glVertex3f( size, -size, -size)
-    glVertex3f(-size, -size, -size)
-    glVertex3f(-size,  size, -size)
-    glVertex3f( size,  size, -size)
-    
-    glVertex3f(-size,  size,  size)
-    glVertex3f(-size,  size, -size)
-    glVertex3f(-size, -size, -size)
-    glVertex3f(-size, -size,  size)
-    
-    glVertex3f( size,  size, -size)
-    glVertex3f( size,  size,  size)
-    glVertex3f( size, -size,  size)
-    glVertex3f( size, -size, -size)
-    glEnd()
+def draw_axis(img, imgpts, corner, length=0.01):
+    origin = tuple(corner.ravel().astype(int))
+    img = cv2.line(img, origin, tuple(imgpts[0].ravel().astype(int)), (255,0,0), 5)
+    img = cv2.line(img, origin, tuple(imgpts[1].ravel().astype(int)), (0,255,0), 5)
+    img = cv2.line(img, origin, tuple(imgpts[2].ravel().astype(int)), (0,0,255), 5)
+    return img
 
 def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coefficients):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -84,10 +58,22 @@ def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
 
     corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict, parameters=parameters)
 
+    # Debug: Print number of markers detected
+    print(f"Number of ArUco markers detected: {len(corners)}")
+
     if len(corners) > 0:
         for i in range(0, len(ids)):
             rvec, tvec, markerPoints = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, matrix_coefficients,
                                                                            distortion_coefficients)
+            
+            # Debug: Print pose information
+            print(f"Marker {ids[i][0]} - Rotation: {rvec}, Translation: {tvec}")
+            
+            # Draw the axes of the marker
+            axis_length = 0.01
+            axis = np.float32([[axis_length,0,0], [0,axis_length,0], [0,0,-axis_length]]).reshape(-1,3)
+            imgpts, jac = cv2.projectPoints(axis, rvec, tvec, matrix_coefficients, distortion_coefficients)
+            frame = draw_axis(frame, imgpts, corners[i][0][0])
             
             cv2.aruco.drawDetectedMarkers(frame, corners)
             
@@ -104,9 +90,9 @@ def pose_estimation(frame, aruco_dict_type, matrix_coefficients, distortion_coef
             glLoadIdentity()
             glMultMatrixf(transformation_matrix.T)
             
-            # Draw the 3D cube
+            # Draw the 3D object
             glColor3f(0.0, 1.0, 0.0)  # Set color to green
-            draw_cube(0.02)  # Draw a cube with side length 0.02 (same as marker size)
+            obj.render()  # Render the loaded OBJ file
 
     return frame
 
@@ -121,11 +107,19 @@ cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
 
+# Debug: Check if camera is opened successfully
+if not cap.isOpened():
+    print("Error: Could not open camera.")
+    sys.exit()
+
 # Initialize Pygame and OpenGL
 pygame.init()
 display = (1280, 720)
 pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
 init_gl(1280, 720)
+
+# Load the OBJ file
+obj = Obj("objects/cube.obj", swapyz=True)
 
 while True:
     ret, frame = cap.read()
@@ -148,6 +142,9 @@ while True:
     # Process the frame and estimate pose
     output = pose_estimation(frame, ARUCO_DICT[aruco_type], intrinsic_camera, distortion)
     
+    # Debug: Display the frame with ArUco markers and axes
+    cv2.imshow('ArUco Detection', output)
+    
     # Convert the OpenCV output to a Pygame surface
     output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
     output = np.rot90(output)
@@ -162,7 +159,14 @@ while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-            quit()
+            cap.release()
+            cv2.destroyAllWindows()
+            sys.exit()
+
+    # Break the loop if 'q' is pressed
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
 cap.release()
 cv2.destroyAllWindows()
+pygame.quit()
