@@ -1,214 +1,152 @@
-import numpy as np
-import cv2
-import pygame
-from pygame.locals import *
 from OpenGL.GL import *
+from OpenGL.GLUT import *
 from OpenGL.GLU import *
-
-class ObjLoader:
-    def __init__(self, filename, swapyz=False):
-        self.vertices = []
-        self.normals = []
-        self.texcoords = []
-        self.faces = []
-        self.gl_list = None
-
-        for line in open(filename, "r"):
-            if line.startswith('#'): continue
-            values = line.split()
-            if not values: continue
-            
-            if values[0] == 'v':
-                v = list(map(float, values[1:4]))
-                if swapyz:
-                    v = v[0], v[2], v[1]
-                self.vertices.append(v)
-            elif values[0] == 'vn':
-                v = list(map(float, values[1:4]))
-                if swapyz:
-                    v = v[0], v[2], v[1]
-                self.normals.append(v)
-            elif values[0] == 'vt':
-                self.texcoords.append(list(map(float, values[1:3])))
-            elif values[0] == 'f':
-                face = []
-                texcoords = []
-                norms = []
-                for v in values[1:]:
-                    w = v.split('/')
-                    face.append(int(w[0]))
-                    if len(w) >= 2 and len(w[1]) > 0:
-                        texcoords.append(int(w[1]))
-                    else:
-                        texcoords.append(0)
-                    if len(w) >= 3 and len(w[2]) > 0:
-                        norms.append(int(w[2]))
-                    else:
-                        norms.append(0)
-                self.faces.append((face, norms, texcoords))
-
-    def create_gl_list(self):
-        if self.gl_list is not None:
-            return self.gl_list
-        
-        self.gl_list = glGenLists(1)
-        glNewList(self.gl_list, GL_COMPILE)
-        glFrontFace(GL_CCW)
-        for face in self.faces:
-            vertices, normals, texture_coords = face
-            glBegin(GL_POLYGON)
-            for i in range(len(vertices)):
-                if normals[i] > 0:
-                    glNormal3fv(self.normals[normals[i] - 1])
-                glVertex3fv(self.vertices[vertices[i] - 1])
-            glEnd()
-        glEndList()
-        return self.gl_list
-
-    def render(self):
-        glCallList(self.create_gl_list())
-
-def init_ar():
-    pygame.init()
-    display = (1280, 720)
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
-    
-    glEnable(GL_DEPTH_TEST)
-    glEnable(GL_LIGHTING)
-    glLightfv(GL_LIGHT0, GL_POSITION, (0, 0, -2, 1))
-    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.2, 0.2, 0.2, 1))
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
-    glEnable(GL_LIGHT0)
-    glEnable(GL_COLOR_MATERIAL)
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-    
-    return display
-
-def set_projection_from_camera(intrinsic):
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    
-    fx = intrinsic[0,0]
-    fy = intrinsic[1,1]
-    fovy = 2 * np.arctan(0.5*720 / fy) * 180 / np.pi
-    aspect = (1280 * fy) / (720 * fx)
-
-    gluPerspective(fovy, aspect, 0.1, 100.0)
-    glViewport(0, 0, 1280, 720)
-
-def set_modelview_from_camera(rvec, tvec):
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-    
-    # Adjust for the shapes returned by estimatePoseSingleMarkers
-    rotation = rvec[0][0]    # Get the 3x1 rotation vector
-    translation = tvec[0][0]  # Get the 3x1 translation vector
-    
-    # Convert rotation vector to matrix
-    rmtx = cv2.Rodrigues(rotation)[0]
-    
-    view_matrix = np.array([[rmtx[0,0], rmtx[0,1], rmtx[0,2], translation[0]],
-                           [rmtx[1,0], rmtx[1,1], rmtx[1,2], translation[1]],
-                           [rmtx[2,0], rmtx[2,1], rmtx[2,2], translation[2]],
-                           [0.0, 0.0, 0.0, 1.0]])
-    
-    view_matrix = view_matrix * np.array([1, -1, -1, 1])
-    
-    inverse_matrix = np.linalg.inv(view_matrix)
-    glLoadMatrixf(inverse_matrix.T)
-
-def draw_background(frame):
-    glDisable(GL_DEPTH_TEST)
-    glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    gluOrtho2D(0, 1280, 0, 720)
-    glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-    
-    # Convert frame to OpenGL texture format
-    bg_image = cv2.flip(frame, 0)
-    bg_image = cv2.cvtColor(bg_image, cv2.COLOR_BGR2RGB)
-    
-    glEnable(GL_TEXTURE_2D)
-    texture_id = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, texture_id)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_image)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    
-    # Draw textured quad
-    glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 1.0); glVertex2f(0, 0)
-    glTexCoord2f(1.0, 1.0); glVertex2f(1280, 0)
-    glTexCoord2f(1.0, 0.0); glVertex2f(1280, 720)
-    glTexCoord2f(0.0, 0.0); glVertex2f(0, 720)
-    glEnd()
-    
-    glDeleteTextures([texture_id])
-    glDisable(GL_TEXTURE_2D)
-    glEnable(GL_DEPTH_TEST)
-
-def main():
-    # Initialize camera and AR
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
-    display = init_ar()
-    
-    # Camera parameters
-    camera_matrix = np.array([[933.15867, 0, 657.59],
-                             [0, 933.1586, 400.36993],
-                             [0, 0, 1]])
-    dist_coeffs = np.array([-0.43948, 0.18514, 0, 0])
-    
-    # Initialize ArUco detector
-    aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_5X5_100)
-    parameters = cv2.aruco.DetectorParameters_create()
-    
-    # Load 3D model
-    obj = ObjLoader("objects/cube.obj", swapyz=True)
-    
-    clock = pygame.time.Clock()
-    
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                cap.release()
-                return
-        
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        # Clear OpenGL buffers
+import cv2
+from PIL import Image
+import numpy as np
+from webcam import Webcam
+from glyphs import Glyphs
+from objloader import *
+ 
+class OpenGLGlyphs:
+  
+    # constants
+    INVERSE_MATRIX = np.array([[ 1.0, 1.0, 1.0, 1.0],
+                               [-1.0,-1.0,-1.0,-1.0],
+                               [-1.0,-1.0,-1.0,-1.0],
+                               [ 1.0, 1.0, 1.0, 1.0]])
+ 
+    def __init__(self):
+        # initialise webcam and start thread
+        self.webcam = Webcam()
+        self.webcam.start()
+ 
+        # initialise glyphs
+        self.glyphs = Glyphs()
+        self.glyphs_cache = None
+ 
+        # initialise cube
+        self.cube = None
+ 
+        # initialise texture
+        self.texture_background = None
+ 
+    def _init_gl(self, Width, Height):
+        glClearColor(0.0, 0.0, 0.0, 0.0)
+        glClearDepth(1.0)
+        glDepthFunc(GL_LESS)
+        glEnable(GL_DEPTH_TEST)
+        glShadeModel(GL_SMOOTH)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        gluPerspective(33.7, 1.3, 0.1, 100.0)
+        glMatrixMode(GL_MODELVIEW)
+         
+        # assign cube
+        self.cube = [OBJ('cube_0.obj'), 
+                     OBJ('cube_1.obj'), 
+                     OBJ('cube_2.obj'), 
+                     OBJ('cube_3.obj')]
+ 
+        # assign texture
+        glEnable(GL_TEXTURE_2D)
+        self.texture_background = glGenTextures(1)
+ 
+    def _draw_scene(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
-        # Draw background (camera frame)
-        draw_background(frame)
-        
-        # Detect ArUco markers
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        corners, ids, _ = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-        
-        if ids is not None:
-            # Set OpenGL camera projection
-            set_projection_from_camera(camera_matrix)
-            
-            # Draw 3D objects for each detected marker
-            for i in range(len(ids)):
-                # Get pose of the marker
-                rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, camera_matrix, dist_coeffs)
-                
-                # Set OpenGL modelview matrix
-                set_modelview_from_camera(rvec, tvec)
-                
-                glColor3f(0.0, 1.0, 0.0)  # Set color to green
-                obj.render()
-        
-        pygame.display.flip()
-        clock.tick(60)
-
-if __name__ == "__main__":
-    main()
+        glLoadIdentity()
+ 
+        # get image from webcam
+        image = self.webcam.get_current_frame()
+ 
+        # convert image to OpenGL texture format
+        bg_image = cv2.flip(image, 0)
+        bg_image = Image.fromarray(bg_image)     
+        ix = bg_image.size[0]
+        iy = bg_image.size[1]
+        bg_image = bg_image.tostring("raw", "BGRX", 0, -1)
+  
+        # create background texture
+        glBindTexture(GL_TEXTURE_2D, self.texture_background)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+        glTexImage2D(GL_TEXTURE_2D, 0, 3, ix, iy, 0, GL_RGBA, GL_UNSIGNED_BYTE, bg_image)
+         
+        # draw background
+        glBindTexture(GL_TEXTURE_2D, self.texture_background)
+        glPushMatrix()
+        glTranslatef(0.0,0.0,-10.0)
+        self._draw_background()
+        glPopMatrix()
+ 
+        # handle glyphs
+        image = self._handle_glyphs(image)
+ 
+        glutSwapBuffers()
+ 
+    def _handle_glyphs(self, image):
+ 
+        # attempt to detect glyphs
+        glyphs = []
+ 
+        try:
+            glyphs = self.glyphs.detect(image)
+        except Exception as ex: 
+            print(ex)
+ 
+        # manage glyphs cache
+        if glyphs:
+            self.glyphs_cache = glyphs
+        elif self.glyphs_cache: 
+            glyphs = self.glyphs_cache
+            self.glyphs_cache = None
+        else:
+            return
+ 
+        for glyph in glyphs:
+             
+            rvecs, tvecs, glyph_rotation, _ = glyph
+ 
+            # build view matrix
+            rmtx = cv2.Rodrigues(rvecs)[0]
+ 
+            view_matrix = np.array([[rmtx[0][0],rmtx[0][1],rmtx[0][2],tvecs[0]],
+                                    [rmtx[1][0],rmtx[1][1],rmtx[1][2],tvecs[1]],
+                                    [rmtx[2][0],rmtx[2][1],rmtx[2][2],tvecs[2]],
+                                    [0.0       ,0.0       ,0.0       ,1.0    ]])
+ 
+            view_matrix = view_matrix * self.INVERSE_MATRIX
+ 
+            view_matrix = np.transpose(view_matrix)
+ 
+            # load view matrix and draw cube
+            glPushMatrix()
+            glLoadMatrixd(view_matrix)
+            glCallList(self.cube[glyph_rotation].gl_list)
+            glColor3f(1.0, 1.0, 1.0)
+            glPopMatrix()
+ 
+    def _draw_background(self):
+        # draw background
+        glBegin(GL_QUADS)
+        glTexCoord2f(0.0, 1.0); glVertex3f(-4.0, -3.0, 0.0)
+        glTexCoord2f(1.0, 1.0); glVertex3f( 4.0, -3.0, 0.0)
+        glTexCoord2f(1.0, 0.0); glVertex3f( 4.0,  3.0, 0.0)
+        glTexCoord2f(0.0, 0.0); glVertex3f(-4.0,  3.0, 0.0)
+        glEnd( )
+ 
+    def main(self):
+        # setup and run OpenGL
+        glutInit()
+        glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH)
+        glutInitWindowSize(640, 480)
+        glutInitWindowPosition(800, 400)
+        self.window_id = glutCreateWindow("OpenGL Glyphs")
+        glutDisplayFunc(self._draw_scene)
+        glutIdleFunc(self._draw_scene)
+        self._init_gl(640, 480)
+        glutMainLoop()
+  
+# run an instance of OpenGL Glyphs 
+openGLGlyphs = OpenGLGlyphs()
+openGLGlyphs.main()

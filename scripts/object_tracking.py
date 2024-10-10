@@ -1,18 +1,12 @@
-
 import cv2
 import numpy as np
 import sys
 import glob
-
 import time
 import torch
 
-
-
 class YoloDetector():
-
-    def __init__(self, model_name):
-        
+    def __init__(self, model_name):        
         self.model = self.load_model(model_name)
         self.classes = self.model.names
         #print(self.classes)
@@ -20,8 +14,7 @@ class YoloDetector():
         print("Using Device: ", self.device)
         
 
-    def load_model(self, model_name):
-   
+    def load_model(self, model_name):   
         if model_name:
             model = torch.hub.load('ultralytics/yolov5', 'custom', path=model_name, force_reload=True)
         else:
@@ -29,7 +22,6 @@ class YoloDetector():
         return model
 
     def score_frame(self, frame):
-
         self.model.to(self.device)
         downscale_factor = 2
         width = int(frame.shape[1] / downscale_factor)
@@ -43,44 +35,34 @@ class YoloDetector():
         
         return labels, cord
 
-    def class_to_label(self, x):
-   
+    def class_to_label(self, x):   
         return self.classes[int(x)]
 
 
-    def plot_boxes(self, results, frame, height, width, confidence=0.3):
-    
+    def plot_boxes(self, results, frame, height, width, confidence=0.3):    
         labels, cord = results
         detections = []
-
         n = len(labels)
         x_shape, y_shape = width, height
         
     
     
         for i in range(n):
-            row = cord[i]
-            
+            row = cord[i]            
             if row[4] >= confidence:
-                x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                
-                if self.class_to_label(labels[i]) == 'cup':
-                
+                x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)                
+                if self.class_to_label(labels[i]) == 'cup':                
                     x_center = x1 + (x2 - x1)
-                    y_center = y1 + ((y2 - y1) / 2)
-                    
+                    y_center = y1 + ((y2 - y1) / 2)                    
                     tlwh = np.asarray([x1, y1, int(x2-x1), int(y2-y1)], dtype=np.float32)
                     confidence = float(row[4].item())
-                    feature = 'person'
-                    
-                    detections.append(([x1, y1, int(x2-x1), int(y2-y1)], row[4].item(), 'person'))
-                
+                    feature = 'person'                    
+                    detections.append(([x1, y1, int(x2-x1), int(y2-y1)], row[4].item(), 'person'))             
         
         return frame, detections
 
 
 cap = cv2.VideoCapture(0)
-
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
@@ -117,11 +99,8 @@ while cap.isOpened():
     start = time.perf_counter()
     
     results = detector.score_frame(img)
-    img, detections = detector.plot_boxes(results, img, height=img.shape[0], width=img.shape[1], confidence=0.5)
-
-        
-    tracks = object_tracker.update_tracks(detections, frame=img) # bbs expected to be a list of detections, each in tuples of ( [left,top,w,h], confidence, detection_class )
-    
+    img, detections = detector.plot_boxes(results, img, height=img.shape[0], width=img.shape[1], confidence=0.5)        
+    tracks = object_tracker.update_tracks(detections, frame=img)   
         
     for track in tracks:
         if not track.is_confirmed():
@@ -139,18 +118,11 @@ while cap.isOpened():
     end = time.perf_counter()
     totalTime = end - start
     fps = 1 / totalTime
-
-
     cv2.putText(img, f'FPS: {int(fps)}', (20,70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,255,0), 2)
     cv2.imshow('img',img)
-
-
     if cv2.waitKey(1) & 0xFF == 27:
         break
 
-
-# Release and destroy all windows before termination
 cap.release()
-
 cv2.destroyAllWindows()
   
