@@ -23,8 +23,6 @@
 # AR-Python-OpenCV
 ## Augmented Reality with Python. Aruco Markers & OpenCV
 
-### arucoPoseObject.py not tested!
-
 ## How to Run:
 
 pip install objloader
