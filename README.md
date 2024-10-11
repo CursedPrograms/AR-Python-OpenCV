@@ -27,6 +27,8 @@
 - [OpenCV ArUco Detection Tutorial](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
 - [PyOpenGL on PyPI](https://pypi.org/project/PyOpenGL/)
 
+- https://threejs.org/docs/#api/en/core/Object3D
+
 ## How to Run:
 
 https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
