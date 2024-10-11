@@ -26,6 +26,7 @@
 ## Documentation: 
 
 https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html
+https://pypi.org/project/PyOpenGL/
 
 ## How to Run:
 
