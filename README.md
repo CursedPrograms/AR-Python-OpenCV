@@ -27,11 +27,13 @@
 
 https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
 
-pip install objloader
-pip install PyOpenGL-3.1.5-cp36-cp36m-win_amd64.whl
-pip install PyOpenGL_accelerate-3.1.5-cp36-cp36m-win_amd64.whl
+```bash
+pip install PyOpenGL-3.1.7-cp12-cp12m-win_amd64.whl
+pip install PyOpenGL_accelerate-3.1.7-cp12-cp12m-win_amd64.whl
+```
 
 ```bash
+pip install objloader
 pip install Cython==3.0.11
 pip install --upgrade pip setuptools wheel
 pip install path_to_downloaded_wheel.whl
