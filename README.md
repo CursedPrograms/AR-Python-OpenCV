@@ -25,7 +25,11 @@
 
 ## How to Run:
 
+https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
+
 pip install objloader
+pip install PyOpenGL-3.1.5-cp36-cp36m-win_amd64.whl
+pip install PyOpenGL_accelerate-3.1.5-cp36-cp36m-win_amd64.whl
 
 ```bash
 pip install Cython==3.0.11
