@@ -21,12 +21,11 @@
   <br>
 
 # AR-Python-OpenCV
-## Augmented Reality with Python. Aruco Markers & OpenCV
+## Augmented Reality with Python: Aruco Markers & OpenCV
 
-## Documentation: 
-
-https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html
-https://pypi.org/project/PyOpenGL/
+## Documentation
+- [OpenCV ArUco Detection Tutorial](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
+- [PyOpenGL on PyPI](https://pypi.org/project/PyOpenGL/)
 
 ## How to Run:
 
