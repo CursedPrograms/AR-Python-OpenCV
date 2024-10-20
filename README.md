@@ -57,18 +57,40 @@ pip install PyOpenGL PyOpenGL_accelerate
 
   <br>
 
+## How to Run:
+
+### Install Requirements
+
+Using Python directly:
+
 ```bash
 pip install -r requirements.txt
 ```
+Or run: 
+- `install_requirements.bat`
+
+  
+  <br>
+
+### Run main.py
+
+Using Python directly:
 
 ```bash
 python main.py
 ```
-To make the setup script executable, run the following command in your terminal:
 
-```bash
-chmod +x setup.sh
-```
+Using provided scripts:
+
+Windows:
+- `.\run.bat`
+or
+- `.\run.ps1`
+
+Unix-like systems (Linux/macOS):
+- `.\run.sh`
+
+  <br>
 
 ```bash
 pip install Cython==3.0.11
