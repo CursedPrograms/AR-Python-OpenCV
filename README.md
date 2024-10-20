@@ -24,6 +24,7 @@
   <br>
 
 # AR-Python-OpenCV
+  <br>
 ## Augmented Reality with Python: Aruco Markers & OpenCV
 
 ## Documentation
@@ -31,6 +32,8 @@
 - [PyOpenGL on PyPI](https://pypi.org/project/PyOpenGL/)
 
 - https://threejs.org/docs/#api/en/core/Object3D
+
+  <br>
 
 ## How to Run:
 
@@ -41,6 +44,8 @@ pip install PyOpenGL-3.1.7-cp12-cp12m-win_amd64.whl
 pip install PyOpenGL_accelerate-3.1.7-cp12-cp12m-win_amd64.whl
 ```
 
+  <br>
+
 ```bash
 pip install objloader
 pip install Cython==3.0.11
@@ -48,6 +53,8 @@ pip install --upgrade pip setuptools wheel
 pip install path_to_downloaded_wheel.whl
 pip install PyOpenGL PyOpenGL_accelerate
 ```
+
+  <br>
 
 ```bash
 pip install -r requirements.txt
@@ -68,6 +75,8 @@ pip install --upgrade pip setuptools wheel
 pip install path_to_downloaded_wheel.whl
 pip install PyOpenGL PyOpenGL_accelerate
 ```
+
+  <br>
 
 ```bash
 opencv-python==4.6.0
