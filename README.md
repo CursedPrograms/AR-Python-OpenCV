@@ -36,6 +36,13 @@
 
   <br>
 
+### 2. Virtual environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
 ## How to Run:
 
 https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
