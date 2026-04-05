@@ -31,42 +31,20 @@
 ## Documentation
 - [OpenCV ArUco Detection Tutorial](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
 - [PyOpenGL on PyPI](https://pypi.org/project/PyOpenGL/)
-
 - https://threejs.org/docs/#api/en/core/Object3D
 
   <br>
 
-### 2. Virtual environment
+  ## How to Run:
+
+### Environment Setup/Install Dependencies
 
 ```bash
 python3 -m venv venv
 source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
-
-## How to Run:
-
-https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
-
-```bash
-pip install PyOpenGL-3.1.7-cp12-cp12m-win_amd64.whl
-pip install PyOpenGL_accelerate-3.1.7-cp12-cp12m-win_amd64.whl
-```
-
-  <br>
-
-```bash
-pip install objloader
-pip install Cython==3.0.11
-pip install --upgrade pip setuptools wheel
-pip install path_to_downloaded_wheel.whl
-pip install PyOpenGL PyOpenGL_accelerate
-```
-
-  <br>
-
-## How to Run:
-
-### Install Requirements
 
 Using Python directly:
 
@@ -97,24 +75,54 @@ or
 Unix-like systems (Linux/macOS):
 - `.\run.sh`
 
-  <br>
+
+https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
 
 ```bash
+pip install opencv-python
+pip install opencv-contrib-python
+pip install matplotlib
+pip install pygame
+pip install PyOpenGL-3.1.7-cp12-cp12m-win_amd64.whl
+pip install PyOpenGL_accelerate-3.1.7-cp12-cp12m-win_amd64.whl
+pip install objloader
+pip install Cython==3.0.11
+pip install --upgrade pip setuptools wheel
+pip install path_to_downloaded_wheel.whl
+pip install PyOpenGL PyOpenGL_accelerate
 pip install Cython==3.0.11
 pip install --upgrade pip setuptools wheel
 pip install path_to_downloaded_wheel.whl
 pip install PyOpenGL PyOpenGL_accelerate
 ```
-
-  <br>
-
+## Requirements:
 ```bash
-opencv-python==4.6.0
-opencv-contrib-python==4.6.0.66
-matplotlib>=3.9.2
-numpy>=1.26.2
-PyOpenGL==3.1.7
-pygame
+Package               Version
+--------------------- -----------
+contourpy             1.3.3
+cycler                0.12.1
+Cython                3.0.11
+fonttools             4.62.1
+glcontext             3.0.0
+kiwisolver            1.5.0
+matplotlib            3.10.8
+moderngl              5.12.0
+numpy                 2.4.4
+objloader             0.2.0
+opencv-contrib-python 4.13.0.92
+opencv-python         4.13.0.92
+packaging             26.0
+pillow                12.2.0
+pip                   26.0.1
+pygame                2.6.1
+PyOpenGL              3.1.10
+PyOpenGL-accelerate   3.1.10
+pyparsing             3.3.2
+python-dateutil       2.9.0.post0
+setuptools            82.0.1
+six                   1.17.0
+wheel                 0.46.3
+
 ```
 <br>
 <div align="center">
