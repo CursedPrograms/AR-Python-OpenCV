@@ -35,7 +35,7 @@
 
   <br>
 
-  ## How to Run:
+## How to Run:
 
 ### Environment Setup/Install Dependencies
 
