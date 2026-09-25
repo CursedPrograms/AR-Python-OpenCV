@@ -1,3 +1,3 @@
 @echo off
-python -m venv psdenv
-cmd /k ".\psdenv\Scripts\activate & python main.py"
+rem Same as run.bat: creates the venv, installs requirements, starts the menu
+call "%~dp0run.bat"

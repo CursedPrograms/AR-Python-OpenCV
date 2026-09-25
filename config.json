@@ -1,11 +1,11 @@
 {
     "Config": {
       "AppName": "AR-Python-OpenCV",
-      "Description": "Augmented Reality with Python & OpenCV",
+      "Description": "Augmented reality with Python and OpenCV: ArUco markers, pose estimation, OpenGL models and depth-aware occlusion",
       "ProjectStructure": {
         "MainScript": "main.py",
         "ObjectPath": "objects/cube.obj",
-        "DependenciesScript": "scripts/install-dependencies.py"
+        "DependenciesScript": "scripts/install_dependencies.py"
       },
       "Scripts": {
 

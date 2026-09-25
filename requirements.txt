@@ -1,22 +1,10 @@
-contourpy==1.3.3
-cycler==0.12.1
-Cython==3.0.11
-fonttools==4.62.1
-glcontext==3.0.0
-kiwisolver==1.5.0
-matplotlib==3.10.8
-moderngl==5.12.0
-numpy==2.4.4
-objloader==0.2.0
-opencv-contrib-python==4.13.0.92
-opencv-python==4.13.0.92
-packaging==26.0
-pillow==12.2.0
-pygame==2.6.1
-PyOpenGL==3.1.10
-PyOpenGL-accelerate==3.1.10
-pyparsing==3.3.2
-python-dateutil==2.9.0.post0
-setuptools==82.0.1
-six==1.17.0
-wheel==0.46.3
+# OpenCV with the contrib modules (ArUco). Do not also install opencv-python:
+# the two packages overwrite each other's cv2 module.
+opencv-contrib-python>=4.8
+numpy
+# OpenGL cube demo (pose_obj_object.py)
+pygame
+PyOpenGL
+# Depth-aware AR (ar_depth.py): MiDaS depth model runner and model download
+onnxruntime
+requests

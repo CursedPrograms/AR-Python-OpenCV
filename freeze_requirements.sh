@@ -3,9 +3,9 @@
 echo "📦 Generating requirements.txt from current environment..."
 
 # Activate venv if it exists
-if [ -d "venv" ]; then
+if [ -d "psdenv" ]; then
     echo "🔧 Activating virtual environment..."
-    source venv/bin/activate
+    source psdenv/bin/activate
 fi
 
 # Generate requirements.txt

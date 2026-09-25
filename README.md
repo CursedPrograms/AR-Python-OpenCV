@@ -21,108 +21,141 @@
   <img alt="PowerShell" src="https://img.shields.io/badge/PowerShell-%23323330.svg?&style=for-the-badge&logo=powershell&logoColor=white"/>
   <img alt="Shell" src="https://img.shields.io/badge/Shell-%23323330.svg?&style=for-the-badge&logo=gnu-bash&logoColor=white"/>
   <img alt="Batch" src="https://img.shields.io/badge/Batch-%23323330.svg?&style=for-the-badge&logo=windows&logoColor=white"/>
-  </div>  
+  </div>
   <br>
 
 # AR-Python-OpenCV
-  <br>
-## Augmented Reality with Python: Aruco Markers & OpenCV
 
-## Documentation
-- [OpenCV ArUco Detection Tutorial](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
-- [PyOpenGL on PyPI](https://pypi.org/project/PyOpenGL/)
-- https://threejs.org/docs/#api/en/core/Object3D
+## Augmented Reality with Python: ArUco Markers, OpenCV & Depth
 
-  <br>
+Point a webcam at a printed ArUco marker and:
 
-## How to Run:
+- **Detect** it: outline and ID
+- **Estimate its pose**: 3D axes and distance
+- **Stand a 3D model on it**: `objects/cube.obj`, rendered with OpenGL
+- **Depth-aware AR**: a cube on the marker that real things in front of it (your hand, a mug) can hide, using [MiDaS](https://github.com/isl-org/MiDaS) monocular depth
 
-### Environment Setup/Install Dependencies
+## Quick Start
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-Using Python directly:
-
-```bash
-pip install -r requirements.txt
-```
-Or run: 
-- `install_requirements.bat`
-
-  
-  <br>
-
-### Run main.py
-
-Using Python directly:
-
-```bash
-python main.py
-```
-
-Using provided scripts:
+Needs Python 3.9 or newer and a webcam. Run one script; on the first run it creates a `psdenv` virtual
+environment and installs the requirements, then opens the menu:
 
 Windows:
 - `.\run.bat`
 or
 - `.\run.ps1`
 
-Unix-like systems (Linux/macOS):
-- `.\run.sh`
+Linux/macOS:
+- `./run.sh`
 
+Then:
 
-https://github.com/CursedPrograms/OpenGL-Wheels-3.1.7-cp312-Archive/tree/main
+1. Choose **1** to generate a marker and print `arucoMarkers/DICT_5X5_100_1.png` so the black square is
+   **5 cm** wide (or pass `--marker-length` with your size). Keep the white border.
+2. Choose a demo and hold the marker in front of the camera. Press **q** or **Esc** in the window to quit.
+
+## Menu
+
+| | Demo | Script |
+|---|---|---|
+| 1 | Generate a printable marker | `scripts/generate_aruco.py` |
+| 2 | ArUco detection | `scripts/aruco_detection.py` |
+| 3 | Pose estimation: axes and distance | `scripts/pose_estimation.py` |
+| 4 | 3D OBJ model on the marker (OpenGL) | `scripts/pose_obj_object.py` |
+| 5 | Depth-aware AR with occlusion | `scripts/ar_depth.py` |
+| 6 | Object tracking with YOLOv5 (optional) | `scripts/object_tracking.py` |
+
+Every demo can also be run on its own, and accepts an image or video instead of the webcam:
 
 ```bash
-pip install opencv-python
-pip install opencv-contrib-python
-pip install matplotlib
-pip install pygame
-pip install PyOpenGL-3.1.7-cp12-cp12m-win_amd64.whl
-pip install PyOpenGL_accelerate-3.1.7-cp12-cp12m-win_amd64.whl
-pip install objloader
-pip install Cython==3.0.11
-pip install --upgrade pip setuptools wheel
-pip install path_to_downloaded_wheel.whl
-pip install PyOpenGL PyOpenGL_accelerate
-pip install Cython==3.0.11
-pip install --upgrade pip setuptools wheel
-pip install path_to_downloaded_wheel.whl
-pip install PyOpenGL PyOpenGL_accelerate
+python scripts/ar_depth.py                        # webcam
+python scripts/ar_depth.py --image photo.jpg
+python scripts/ar_depth.py --video clip.mp4 --save out.mp4
+python scripts/pose_estimation.py --dict DICT_4X4_50 --marker-length 0.08
+python scripts/generate_aruco.py --id 7 --size 600
 ```
-## Requirements:
+
+Common options: `--image`, `--video`, `--camera N`, `--dict`, `--marker-length` (metres), `--save`, `--no-show`.
+Run any script with `--help` for the full list.
+
+## Depth-aware AR
+
+`scripts/ar_depth.py` stands a cube on the marker and hides the parts of it that are behind real objects.
+
+1. The marker's pose gives its true distance in metres.
+2. MiDaS estimates a *relative* depth map of the whole frame. Its value at the marker, paired with the marker's
+   true distance, scales that map into metres.
+3. The cube is drawn with a depth for every pixel; wherever the real scene is closer than the cube, the cube is
+   hidden.
+
+Keys: **o** turns occlusion on and off, **d** shows the depth map, **q** / **Esc** quits.
+
+- The MiDaS Small model (~63 MB) downloads to `models/` on first use. `--model large` is more detailed but about
+  20× slower on a CPU.
+- MiDaS runs on a background thread, so the video stays smooth; the depth used for occlusion lags by a frame or two.
+- If your hand covers the marker, the cube stays where it was for a second instead of vanishing.
+- Monocular depth is approximate: occlusion edges are soft, and thin things (fingers, leaves) may not hide the
+  cube cleanly. `--tolerance` sets how much closer a surface must be to hide the cube.
+
+## Camera calibration
+
+Without calibration the demos assume a typical webcam (about 60° field of view, no lens distortion). The cube
+still sits on the marker, but distances are approximate. For accurate poses, save your camera's calibration as
+`calibration.npz` in the repo folder:
+
+```python
+import numpy as np
+np.savez("calibration.npz", camera_matrix=K, dist_coeffs=dist, image_size=[width, height])
+```
+
+(`K` and `dist` come from `cv2.calibrateCamera`; see OpenCV's
+[calibration tutorial](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html).)
+
+## Manual setup
+
 ```bash
-Package               Version
---------------------- -----------
-contourpy             1.3.3
-cycler                0.12.1
-Cython                3.0.11
-fonttools             4.62.1
-glcontext             3.0.0
-kiwisolver            1.5.0
-matplotlib            3.10.8
-moderngl              5.12.0
-numpy                 2.4.4
-objloader             0.2.0
-opencv-contrib-python 4.13.0.92
-opencv-python         4.13.0.92
-packaging             26.0
-pillow                12.2.0
-pip                   26.0.1
-pygame                2.6.1
-PyOpenGL              3.1.10
-PyOpenGL-accelerate   3.1.10
-pyparsing             3.3.2
-python-dateutil       2.9.0.post0
-setuptools            82.0.1
-six                   1.17.0
-wheel                 0.46.3
+python -m venv psdenv
+psdenv\Scripts\activate          # Linux/macOS: source psdenv/bin/activate
+pip install -r requirements.txt
+python main.py
 ```
+
+Install **`opencv-contrib-python` only**, not `opencv-python` as well: the two packages overwrite each other's
+`cv2` module. The code uses the ArUco API from OpenCV 4.7 and newer (`ArucoDetector`, `generateImageMarker`,
+`solvePnP`); the older `Dictionary_get` / `detectMarkers` / `estimatePoseSingleMarkers` functions no longer exist.
+
+Object tracking (menu 6) needs extra, large packages (about 2.5 GB):
+
+```bash
+pip install torch deep-sort-realtime
+```
+
+## Repository layout
+
+```
+main.py                   Menu
+requirements.txt
+run.bat, run.ps1, run.sh  Create the venv, install requirements, start the menu
+scripts/
+  ar_common.py            ArUco detection, pose (solvePnP), camera intrinsics, webcam/image/video loop
+  generate_aruco.py       Printable markers
+  aruco_detection.py      Detection
+  pose_estimation.py      Pose axes and distance
+  pose_obj_object.py      OBJ model with OpenGL + pygame
+  ar_depth.py             Depth-aware AR with occlusion
+  depth.py                MiDaS depth (ONNX) and metric scaling
+  object_tracking.py      YOLOv5 + DeepSORT tracking (optional)
+  pose_object.py, glyph*.py, webcam.py, constants.py   Older glyph-marker version (not maintained; needs
+                                                       cube_0-3.obj files that are not in the repo)
+objects/                  cube.obj, material and texture
+```
+
+## Documentation
+
+- [OpenCV ArUco detection tutorial](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
+- [MiDaS monocular depth](https://github.com/isl-org/MiDaS)
+- [PyOpenGL on PyPI](https://pypi.org/project/PyOpenGL/)
+
 <br>
 <div align="center">
 © Cursed Entertainment

@@ -1,16 +1,19 @@
 #!/bin/bash
+cd "$(dirname "$0")" || exit 1
 
 VENV_DIR="psdenv"
+PY="$VENV_DIR/bin/python"
 
-# Check if the virtual environment directory exists
-if [ ! -d "$VENV_DIR" ]; then
-    # Create the virtual environment
-    python -m venv "$VENV_DIR"
+if [ ! -x "$PY" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$VENV_DIR" || { echo "Setup failed"; exit 1; }
 fi
 
-# Activate the virtual environment and run the Python script
-source "$VENV_DIR/bin/activate"
-python main.py
+# Install requirements when requirements.txt changed since the last install
+if ! cmp -s requirements.txt "$VENV_DIR/requirements.installed"; then
+    echo "Installing requirements..."
+    "$PY" -m pip install -r requirements.txt || { echo "Setup failed"; exit 1; }
+    cp requirements.txt "$VENV_DIR/requirements.installed"
+fi
 
-# Pause for user input before closing (optional)
-read -p "Press Enter to continue..."
+"$PY" main.py

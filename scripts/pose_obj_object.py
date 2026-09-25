@@ -1,9 +1,21 @@
+"""Draw a 3D OBJ model (objects/cube.obj) standing on each ArUco marker, with OpenGL.
+
+    python scripts/pose_obj_object.py                     # webcam
+    python scripts/pose_obj_object.py --image photo.jpg
+    python scripts/pose_obj_object.py --model objects/cube.obj --marker-length 0.05
+    Keys: q / Esc = quit
+"""
+import os
+import sys
+
 import numpy as np
 import cv2
 import pygame
 from pygame.locals import *
 from OpenGL.GL import *
 from OpenGL.GLU import *
+
+import ar_common
 
 class ObjLoader:
     def __init__(self, filename, swapyz=False):
@@ -68,149 +80,174 @@ class ObjLoader:
     def render(self):
         glCallList(self.create_gl_list())
 
-def init_ar():
+def init_ar(width, height):
     pygame.init()
-    display = (1280, 720)
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
-    
+    pygame.display.set_mode((width, height), DOUBLEBUF | OPENGL)
+    pygame.display.set_caption("AR OBJ model")
+
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_LIGHTING)
-    glLightfv(GL_LIGHT0, GL_POSITION, (0, 0, -2, 1))
-    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.2, 0.2, 0.2, 1))
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
+    # Directional light from the upper left, behind the camera (eye space), so the
+    # cube's faces get different shades
+    glLightfv(GL_LIGHT0, GL_POSITION, (-0.6, 1.0, 0.8, 0.0))
+    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.3, 0.3, 0.3, 1))
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.8, 0.8, 0.8, 1))
     glEnable(GL_LIGHT0)
     glEnable(GL_COLOR_MATERIAL)
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
-    
-    return display
+    # The model is scaled down a lot; keep its normals unit length for lighting
+    glEnable(GL_NORMALIZE)
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1)  # frame rows are not always 4-byte aligned
 
-def set_projection_from_camera(intrinsic):
+def set_projection_from_camera(K, width, height, near=0.01, far=100.0):
+    """OpenGL projection matching the camera matrix exactly, including the principal
+    point (gluPerspective assumes it is at the image centre)."""
+    fx, fy, cx, cy = K[0, 0], K[1, 1], K[0, 2], K[1, 2]
+    P = np.array([
+        [2 * fx / width, 0, 1 - 2 * cx / width, 0],
+        [0, 2 * fy / height, 2 * cy / height - 1, 0],
+        [0, 0, -(far + near) / (far - near), -2 * far * near / (far - near)],
+        [0, 0, -1, 0],
+    ])
     glMatrixMode(GL_PROJECTION)
-    glLoadIdentity()
-    
-    fx = intrinsic[0,0]
-    fy = intrinsic[1,1]
-    fovy = 2 * np.arctan(0.5*720 / fy) * 180 / np.pi
-    aspect = (1280 * fy) / (720 * fx)
-
-    gluPerspective(fovy, aspect, 0.1, 100.0)
-    glViewport(0, 0, 1280, 720)
+    glLoadMatrixd(P.T)  # OpenGL wants column-major
+    glViewport(0, 0, width, height)
 
 def set_modelview_from_camera(rvec, tvec):
+    """Marker -> camera transform as the OpenGL model-view matrix. OpenCV's camera
+    looks down +z with y down; OpenGL's looks down -z with y up, hence the flip.
+    (The old code loaded the inverse of this, which is the camera pose seen from
+    the marker, so the model did not sit on the marker.)"""
+    R, _ = cv2.Rodrigues(rvec)
+    M = np.eye(4)
+    M[:3, :3] = R
+    M[:3, 3] = tvec.ravel()
+    M = np.diag([1, -1, -1, 1]) @ M
     glMatrixMode(GL_MODELVIEW)
-    glLoadIdentity()
-    
-    rotation = rvec[0][0]
-    translation = tvec[0][0]
-    
-    rmtx = cv2.Rodrigues(rotation)[0]
-    
-    view_matrix = np.array([[rmtx[0,0], rmtx[0,1], rmtx[0,2], translation[0]],
-                           [rmtx[1,0], rmtx[1,1], rmtx[1,2], translation[1]],
-                           [rmtx[2,0], rmtx[2,1], rmtx[2,2], translation[2]],
-                           [0.0, 0.0, 0.0, 1.0]])
-    
-    view_matrix = view_matrix * np.array([1, -1, -1, 1])
-    
-    inverse_matrix = np.linalg.inv(view_matrix)
-    glLoadMatrixf(inverse_matrix.T)
+    glLoadMatrixd(M.T)
 
 def draw_background(frame):
+    h, w = frame.shape[:2]
     glDisable(GL_DEPTH_TEST)
+    glDisable(GL_LIGHTING)
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
-    gluOrtho2D(0, 1280, 0, 720)
+    gluOrtho2D(0, w, 0, h)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
-    
-    # Convert frame to OpenGL texture format
-    bg_image = cv2.flip(frame, 0)
-    bg_image = cv2.cvtColor(bg_image, cv2.COLOR_BGR2RGB)
-    
+
+    bg_image = cv2.cvtColor(cv2.flip(frame, 0), cv2.COLOR_BGR2RGB)
+
     glEnable(GL_TEXTURE_2D)
     texture_id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, texture_id)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1280, 720, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_image)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w, h, 0, GL_RGB, GL_UNSIGNED_BYTE, bg_image)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    
-    # Draw textured quad
+
+    glColor3f(1.0, 1.0, 1.0)
     glBegin(GL_QUADS)
-    glTexCoord2f(0.0, 1.0); glVertex2f(0, 0)
-    glTexCoord2f(1.0, 1.0); glVertex2f(1280, 0)
-    glTexCoord2f(1.0, 0.0); glVertex2f(1280, 720)
-    glTexCoord2f(0.0, 0.0); glVertex2f(0, 720)
+    glTexCoord2f(0.0, 0.0); glVertex2f(0, 0)
+    glTexCoord2f(1.0, 0.0); glVertex2f(w, 0)
+    glTexCoord2f(1.0, 1.0); glVertex2f(w, h)
+    glTexCoord2f(0.0, 1.0); glVertex2f(0, h)
     glEnd()
-    
+
     glDeleteTextures([texture_id])
     glDisable(GL_TEXTURE_2D)
+    glEnable(GL_LIGHTING)
     glEnable(GL_DEPTH_TEST)
 
+def save_screen(path, width, height):
+    glReadBuffer(GL_BACK)
+    data = glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE)
+    img = np.frombuffer(data, np.uint8).reshape(height, width, 3)
+    cv2.imwrite(path, cv2.cvtColor(cv2.flip(img, 0), cv2.COLOR_RGB2BGR))
+    print(f"Saved {path}")
+
 def main():
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    
-    display = init_ar()
-    
-    camera_matrix = np.array([[933.15867, 0, 657.59],
-                             [0, 933.1586, 400.36993],
-                             [0, 0, 1]])
-    dist_coeffs = np.array([-0.43948, 0.18514, 0, 0])
-    
-    aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_5X5_100)
-    parameters = cv2.aruco.DetectorParameters_create()
-    
-    obj = ObjLoader("objects/cube.obj", swapyz=True)
-    
+    p = ar_common.parser("Draw a 3D OBJ model on ArUco markers (OpenGL)")
+    ar_common.add_source_args(p)
+    ar_common.add_aruco_args(p)
+    p.add_argument("--model", default=os.path.join(ar_common.REPO_DIR, "objects", "cube.obj"),
+                   help="OBJ file to draw (default objects/cube.obj)")
+    args = p.parse_args()
+
+    if args.image:
+        still = cv2.imread(args.image)
+        if still is None:
+            sys.exit(f"Could not read image {args.image}")
+        cap = None
+    else:
+        cap = ar_common.open_capture(args)
+        ok, still = cap.read()
+        if not ok:
+            sys.exit("Could not read from the camera or video")
+    height, width = still.shape[:2]
+
+    init_ar(width, height)
+    camera_matrix, dist_coeffs = ar_common.camera_intrinsics(width, height)
+    detector = ar_common.make_detector(args.dict)
+    obj = ObjLoader(args.model, swapyz=True)
+    # objects/cube.obj spans -1..1; scale it to the marker and stand it on the marker
+    half = args.marker_length / 2
+
     clock = pygame.time.Clock()
-    
-    # Initialize smoothing variables
-    smooth_rvec = None
-    smooth_tvec = None
-    smooth_factor = 0.8
-    
+    smooth = {}  # marker id -> smoothed (rvec, tvec), to reduce jitter
+    smooth_factor = 0.6
+    frame = still  # the first frame (it also gave the window size)
+    first = True
+
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT or (event.type == KEYDOWN and event.key in (K_q, K_ESCAPE)):
                 pygame.quit()
-                cap.release()
+                if cap is not None:
+                    cap.release()
                 return
-        
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
+
+        if cap is not None and not first:
+            ok, frame = cap.read()
+            if not ok:
+                break
+        first = False
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        
         draw_background(frame)
-        
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        corners, ids, _ = cv2.aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-        
+
+        corners, ids, _ = detector.detectMarkers(frame)
         if ids is not None:
-            set_projection_from_camera(camera_matrix)
-            
-            for i in range(len(ids)):
-                rvec, tvec, _ = cv2.aruco.estimatePoseSingleMarkers(corners[i], 0.02, camera_matrix, dist_coeffs)
-                
-                # Apply smoothing
-                if smooth_rvec is None:
-                    smooth_rvec, smooth_tvec = rvec, tvec
-                else:
-                    smooth_rvec = smooth_factor * smooth_rvec + (1 - smooth_factor) * rvec
-                    smooth_tvec = smooth_factor * smooth_tvec + (1 - smooth_factor) * tvec
-                
-                set_modelview_from_camera(smooth_rvec, smooth_tvec)
-                
-                glColor3f(1.0, 1.0, 1.0)  # Set color to white
+            set_projection_from_camera(camera_matrix, width, height)
+            for c, marker_id in zip(corners, ids.flatten()):
+                pose = ar_common.estimate_pose(c, args.marker_length, camera_matrix, dist_coeffs)
+                if pose is None:
+                    continue
+                rvec, tvec = pose
+                if marker_id in smooth:
+                    sr, st = smooth[marker_id]
+                    rvec = smooth_factor * sr + (1 - smooth_factor) * rvec
+                    tvec = smooth_factor * st + (1 - smooth_factor) * tvec
+                smooth[marker_id] = (rvec, tvec)
+
+                set_modelview_from_camera(rvec, tvec)
+                glColor3f(1.0, 0.65, 0.25)
                 glPushMatrix()
-                glScalef(0.005, 0.005, 0.005)  # Scale down the cube
+                glTranslatef(0, 0, half)       # base on the marker, not halfway through it
+                glScalef(half, half, half)
                 obj.render()
                 glPopMatrix()
-        
+
+        if args.save:
+            save_screen(args.save, width, height)
+            if cap is None or args.no_show:
+                pygame.quit()
+                return
         pygame.display.flip()
         clock.tick(60)
+
+    pygame.quit()
+    if cap is not None:
+        cap.release()
 
 if __name__ == "__main__":
     main()
